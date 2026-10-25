@@ -1,0 +1,77 @@
+:root {
+  color-scheme: light;
+
+  --mc-paper: #f4f0e8;
+  --mc-ink: #10100f;
+  --mc-panel: #e5dfd4;
+  --mc-lime: #d7ff36;
+  --mc-orange: #ff5a3d;
+  --mc-blue: #6ba7ff;
+  --mc-muted: #60605b;
+  --mc-rule: rgba(16, 16, 15, 0.28);
+
+  --mc-surface: var(--mc-paper);
+  --mc-surface-raised: #faf8f2;
+  --mc-surface-muted: var(--mc-panel);
+  --mc-text-primary: var(--mc-ink);
+  --mc-text-secondary: var(--mc-muted);
+  --mc-border: var(--mc-rule);
+
+  --mc-success: #236b3a;
+  --mc-warning: #865100;
+  --mc-danger: #b42318;
+  --mc-info: #2457a7;
+
+  --mc-font-display: "Syne", "Segoe UI", system-ui, sans-serif;
+  --mc-font-mono: "DM Mono", ui-monospace, "Cascadia Mono", "Consolas", monospace;
+
+  --mc-text-hero: clamp(3.5rem, 10vw, 8rem);
+  --mc-text-page: clamp(2.5rem, 5vw, 4.5rem);
+  --mc-text-section: clamp(2rem, 3vw, 3.5rem);
+  --mc-text-card: clamp(1.1rem, 1.5vw, 1.5rem);
+  --mc-text-body: 1rem;
+  --mc-text-supporting: 0.875rem;
+  --mc-text-meta: 0.7rem;
+
+  --mc-space-1: 0.25rem;
+  --mc-space-2: 0.5rem;
+  --mc-space-3: 0.75rem;
+  --mc-space-4: 1rem;
+  --mc-space-5: 1.25rem;
+  --mc-space-6: 1.75rem;
+  --mc-space-7: 2.5rem;
+  --mc-space-8: 4rem;
+  --mc-space-9: 6rem;
+
+  --mc-radius-sharp: 0;
+  --mc-radius-soft: 2px;
+  --mc-radius-pill: 999px;
+
+  --mc-border-thin: 1px solid var(--mc-rule);
+
+  --mc-motion-fast: 140ms;
+  --mc-motion-base: 200ms;
+  --mc-motion-slow: 260ms;
+  --mc-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --mc-layout-max: 1440px;
+  --mc-gutter: 1rem;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --mc-gutter: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --mc-gutter: 2rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --mc-gutter: 3rem;
+  }
+}
