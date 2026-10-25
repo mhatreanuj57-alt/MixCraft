@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+pnpm-lock.yaml
+prd.md
+architecture.md
+design.md
+file_structure.md
+
+# Generated Prisma client
+packages/database/src/generated/
+**/generated/**
