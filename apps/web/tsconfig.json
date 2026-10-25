@@ -1,0 +1,14 @@
+{
+  "extends": "../../packages/config/typescript/base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "types": [],
+    "declaration": false,
+    "declarationMap": false
+  },
+  "include": ["src", "vite.config.ts", "tests"]
+}
