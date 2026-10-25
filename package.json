@@ -1,0 +1,24 @@
+{
+  "name": "mixcraft",
+  "version": "0.0.1",
+  "private": true,
+  "description": "MixCraft — unified developer control center for GitHub, npm, and Vercel",
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @mixcraft/shared build && pnpm --filter @mixcraft/database build && pnpm --parallel --filter @mixcraft/web --filter @mixcraft/api dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm --filter @mixcraft/shared build && pnpm --filter @mixcraft/database build && pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@mixcraft/config": "workspace:*",
+    "prettier": "^3.6.0"
+  },
+  "prettier": "@mixcraft/config/prettier"
+}
