@@ -32,21 +32,22 @@ Prisma 7 specifics: `prisma7.config.ts` loads `.env` via `process.loadEnvFile()`
 
 ### Environment variables
 
-`.env.example` documents every variable; production (`NODE_ENV=production`) enforces all of them at boot.
+`.env.example` documents application variables. Production (`NODE_ENV=production`) requires all provider credentials. On Vercel Preview, `VERCEL_ENV=preview` keeps production cookie security while allowing GitHub login and provider connection credentials to be omitted; absent credentials disable those flows. Preview still requires the database, encryption key, and public origins for authenticated functionality.
 
 | Variable                                            | Default                 | Notes                                                                                                                                 |
 | --------------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `NODE_ENV`                                          | `development`           | `production` enables strict validation and `Secure` cookies                                                                           |
+| `VERCEL_ENV`                                        | —                       | Set automatically by Vercel; `preview` relaxes provider credential requirements while retaining `NODE_ENV=production`                 |
 | `API_PORT` / `API_HOST`                             | `3001` / `127.0.0.1`    | API bind address                                                                                                                      |
-| `WEB_ORIGIN`                                        | `http://localhost:5173` | Browser origin; redirect target after login and after connection callbacks, CORS/CSRF allowlist                                       |
-| `API_BASE_URL`                                      | `http://127.0.0.1:3001` | Public API origin; OAuth `redirect_uri` and CSRF allowlist entry (required in production)                                             |
-| `DATABASE_URL`                                      | —                       | PostgreSQL connection string (required in production)                                                                                 |
-| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`         | —                       | GitHub **login** OAuth app credentials (required in production)                                                                       |
-| `GITHUB_APP_ID` / `GITHUB_APP_SLUG`                 | —                       | GitHub **App** used for provider connections; slug builds the install URL (required in production)                                    |
-| `GITHUB_APP_CLIENT_ID` / `GITHUB_APP_CLIENT_SECRET` | —                       | GitHub App OAuth credentials for the install-flow token exchange (required in production)                                             |
-| `GITHUB_APP_PRIVATE_KEY`                            | —                       | GitHub App private key (PEM) used to sign App JWTs for the installation API (required in production)                                  |
-| `VERCEL_CLIENT_ID` / `VERCEL_CLIENT_SECRET`         | —                       | Vercel OAuth application for the connection flow (required in production)                                                             |
-| `ENCRYPTION_KEY`                                    | —                       | 64 hex chars or base64 decoding to 32 bytes; encrypts the PKCE verifier and all provider credentials at rest (required in production) |
+| `WEB_ORIGIN`                                        | `http://localhost:5173` | Browser origin; redirect target after login and after connection callbacks; required in production and Preview                          |
+| `API_BASE_URL`                                      | `http://127.0.0.1:3001` | Public API origin; OAuth `redirect_uri` and CSRF allowlist entry; required in production and Preview                                   |
+| `DATABASE_URL`                                      | —                       | PostgreSQL connection string; required in production and Preview                                                                      |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`         | —                       | GitHub **login** OAuth app credentials; required in production, optional in Preview (sign-in unavailable if omitted)                   |
+| `GITHUB_APP_ID` / `GITHUB_APP_SLUG`                 | —                       | GitHub **App** used for provider connections; required in production, optional in Preview                                              |
+| `GITHUB_APP_CLIENT_ID` / `GITHUB_APP_CLIENT_SECRET` | —                       | GitHub App OAuth credentials for the install-flow token exchange; required in production, optional in Preview                          |
+| `GITHUB_APP_PRIVATE_KEY`                            | —                       | GitHub App private key (PEM) used to sign App JWTs; required in production, optional in Preview                                       |
+| `VERCEL_CLIENT_ID` / `VERCEL_CLIENT_SECRET`         | —                       | Vercel OAuth connection credentials; required in production, optional in Preview                                                      |
+| `ENCRYPTION_KEY`                                    | —                       | 64 hex chars or base64 decoding to 32 bytes; required in production and Preview                                                       |
 | `SESSION_IDLE_TTL_MINUTES`                          | `720`                   | Session idle timeout (must be ≤ absolute TTL)                                                                                         |
 | `SESSION_ABSOLUTE_TTL_MINUTES`                      | `10080`                 | Session absolute lifetime                                                                                                             |
 | `OAUTH_TRANSACTION_TTL_SECONDS`                     | `600`                   | Login **and** connection OAuth transaction lifetime (state hash, PKCE verifier, binding cookies), 60–3600 s                           |

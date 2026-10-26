@@ -69,7 +69,7 @@ Frontend: `http://localhost:5173` (proxies `/api` to the API). API health check:
 
 All connection credentials are encrypted server-side with `ENCRYPTION_KEY`; responses, logs, and the frontend only ever contain account names, scopes, status, and timestamps. Connect/refresh/disconnect require a session plus the double-submit CSRF token; OAuth callbacks redirect instead of returning JSON so provider round-trips degrade honestly.
 
-Configuration (all optional in development, required in production — a missing provider returns `503 PROVIDER_UNAVAILABLE` instead of failing boot):
+Configuration is optional in development. Production requires all provider credentials. In Vercel Preview (`VERCEL_ENV=preview`, with `NODE_ENV=production`), GitHub App and Vercel connection credentials may be omitted; those integrations report unconfigured and return `503 PROVIDER_UNAVAILABLE` when used. GitHub login credentials may also be omitted, which disables sign-in. Database, encryption key, and public origins remain required for authenticated Preview use:
 
 | Variable                                                   | Purpose                                                    |
 | ---------------------------------------------------------- | ---------------------------------------------------------- |

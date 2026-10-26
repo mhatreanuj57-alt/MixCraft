@@ -19,9 +19,13 @@ const optionalString = z.preprocess(emptyToUndefined, z.string().min(1).optional
 const envSchema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+    VERCEL_ENV: z.preprocess(
+      emptyToUndefined,
+      z.enum(["development", "preview", "production"]).optional(),
+    ),
     API_PORT: z.coerce.number().int().min(1).max(65535).default(3001),
     API_HOST: z.string().min(1).default("127.0.0.1"),
-    WEB_ORIGIN: z.string().url().default("http://localhost:5173"),
+    WEB_ORIGIN: z.preprocess(emptyToUndefined, z.string().url().optional()),
     API_BASE_URL: z.preprocess(emptyToUndefined, z.string().url().optional()),
     DATABASE_URL: optionalString,
     GITHUB_CLIENT_ID: optionalString,
@@ -58,12 +62,16 @@ const envSchema = z
     if (value.NODE_ENV !== "production") {
       return;
     }
-    const requiredFields = [
+    const previewRequiredFields = [
       "DATABASE_URL",
-      "GITHUB_CLIENT_ID",
-      "GITHUB_CLIENT_SECRET",
+      "WEB_ORIGIN",
       "ENCRYPTION_KEY",
       "API_BASE_URL",
+    ] as const;
+    const productionRequiredFields = [
+      ...previewRequiredFields,
+      "GITHUB_CLIENT_ID",
+      "GITHUB_CLIENT_SECRET",
       "GITHUB_APP_ID",
       "GITHUB_APP_SLUG",
       "GITHUB_APP_CLIENT_ID",
@@ -72,6 +80,8 @@ const envSchema = z
       "VERCEL_CLIENT_ID",
       "VERCEL_CLIENT_SECRET",
     ] as const;
+    const requiredFields =
+      value.VERCEL_ENV === "preview" ? previewRequiredFields : productionRequiredFields;
     for (const field of requiredFields) {
       if (value[field] === undefined) {
         ctx.addIssue({
@@ -84,6 +94,7 @@ const envSchema = z
   })
   .transform((value) => ({
     ...value,
+    WEB_ORIGIN: value.WEB_ORIGIN ?? "http://localhost:5173",
     API_BASE_URL: value.API_BASE_URL ?? "http://127.0.0.1:3001",
   }));
 

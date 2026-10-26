@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { env, type Env } from "../../../src/config/env.js";
+import { env, loadEnv, type Env } from "../../../src/config/env.js";
 import { loadConnectionsConfig } from "../../../src/modules/connections/connection.config.js";
 
 function envWith(overrides: Partial<Env>): Env {
@@ -11,6 +11,19 @@ describe("loadConnectionsConfig", () => {
     const config = loadConnectionsConfig();
     expect(config.githubApp).toBeNull();
     expect(config.vercel).toBeNull();
+  });
+
+  it("leaves GitHub App and Vercel connections unconfigured in Preview", () => {
+    const previewEnv = loadEnv({
+      NODE_ENV: "production",
+      VERCEL_ENV: "preview",
+      DATABASE_URL: "postgresql://user:pass@preview-db.example:5432/mixcraft",
+      ENCRYPTION_KEY: Buffer.alloc(32).toString("base64"),
+      WEB_ORIGIN: "https://mixcraft-preview.example",
+      API_BASE_URL: "https://mixcraft-preview.example",
+    });
+
+    expect(loadConnectionsConfig(previewEnv)).toEqual({ githubApp: null, vercel: null });
   });
 
   it("builds the GitHub App config only when all five values are present", () => {

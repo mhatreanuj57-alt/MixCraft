@@ -76,20 +76,79 @@ describe("loadEnv", () => {
   });
 
   it("requires GitHub credentials, database, and encryption key in production", () => {
-    expect(() => loadEnv({ NODE_ENV: "production" })).toThrow(/GITHUB_CLIENT_ID/);
-    expect(() => loadEnv({ NODE_ENV: "production" })).toThrow(/DATABASE_URL/);
-    expect(() => loadEnv({ NODE_ENV: "production" })).toThrow(/ENCRYPTION_KEY/);
-    expect(() => loadEnv({ NODE_ENV: "production" })).toThrow(/API_BASE_URL/);
+    expect(() => loadEnv({ NODE_ENV: "production", VERCEL_ENV: "production" })).toThrow(
+      /GITHUB_CLIENT_ID/,
+    );
+    expect(() => loadEnv({ NODE_ENV: "production", VERCEL_ENV: "production" })).toThrow(
+      /DATABASE_URL/,
+    );
+    expect(() => loadEnv({ NODE_ENV: "production", VERCEL_ENV: "production" })).toThrow(
+      /WEB_ORIGIN/,
+    );
+    expect(() => loadEnv({ NODE_ENV: "production", VERCEL_ENV: "production" })).toThrow(
+      /ENCRYPTION_KEY/,
+    );
+    expect(() => loadEnv({ NODE_ENV: "production", VERCEL_ENV: "production" })).toThrow(
+      /API_BASE_URL/,
+    );
   });
 
   it("requires GitHub App and Vercel connection credentials in production", () => {
-    expect(() => loadEnv({ NODE_ENV: "production" })).toThrow(/GITHUB_APP_ID/);
-    expect(() => loadEnv({ NODE_ENV: "production" })).toThrow(/GITHUB_APP_SLUG/);
-    expect(() => loadEnv({ NODE_ENV: "production" })).toThrow(/GITHUB_APP_CLIENT_ID/);
-    expect(() => loadEnv({ NODE_ENV: "production" })).toThrow(/GITHUB_APP_CLIENT_SECRET/);
-    expect(() => loadEnv({ NODE_ENV: "production" })).toThrow(/GITHUB_APP_PRIVATE_KEY/);
-    expect(() => loadEnv({ NODE_ENV: "production" })).toThrow(/VERCEL_CLIENT_ID/);
-    expect(() => loadEnv({ NODE_ENV: "production" })).toThrow(/VERCEL_CLIENT_SECRET/);
+    expect(() => loadEnv({ NODE_ENV: "production", VERCEL_ENV: "production" })).toThrow(
+      /GITHUB_APP_ID/,
+    );
+    expect(() => loadEnv({ NODE_ENV: "production", VERCEL_ENV: "production" })).toThrow(
+      /GITHUB_APP_SLUG/,
+    );
+    expect(() => loadEnv({ NODE_ENV: "production", VERCEL_ENV: "production" })).toThrow(
+      /GITHUB_APP_CLIENT_ID/,
+    );
+    expect(() => loadEnv({ NODE_ENV: "production", VERCEL_ENV: "production" })).toThrow(
+      /GITHUB_APP_CLIENT_SECRET/,
+    );
+    expect(() => loadEnv({ NODE_ENV: "production", VERCEL_ENV: "production" })).toThrow(
+      /GITHUB_APP_PRIVATE_KEY/,
+    );
+    expect(() => loadEnv({ NODE_ENV: "production", VERCEL_ENV: "production" })).toThrow(
+      /VERCEL_CLIENT_ID/,
+    );
+    expect(() => loadEnv({ NODE_ENV: "production", VERCEL_ENV: "production" })).toThrow(
+      /VERCEL_CLIENT_SECRET/,
+    );
+  });
+
+  it("allows provider credentials to be absent in production-mode Preview", () => {
+    const env = loadEnv({
+      NODE_ENV: "production",
+      VERCEL_ENV: "preview",
+      DATABASE_URL: "postgresql://user:pass@preview-db.example:5432/mixcraft",
+      ENCRYPTION_KEY: VALID_KEY,
+      WEB_ORIGIN: "https://mixcraft-preview.example",
+      API_BASE_URL: "https://mixcraft-preview.example",
+    });
+
+    expect(env.NODE_ENV).toBe("production");
+    expect(env.VERCEL_ENV).toBe("preview");
+    expect(env.GITHUB_CLIENT_ID).toBeUndefined();
+    expect(env.GITHUB_CLIENT_SECRET).toBeUndefined();
+    expect(env.GITHUB_APP_ID).toBeUndefined();
+    expect(env.VERCEL_CLIENT_ID).toBeUndefined();
+  });
+
+  it("still requires core authenticated Preview settings", () => {
+    const coreSettings = {
+      NODE_ENV: "production",
+      VERCEL_ENV: "preview",
+      DATABASE_URL: "postgresql://user:pass@preview-db.example:5432/mixcraft",
+      ENCRYPTION_KEY: VALID_KEY,
+      WEB_ORIGIN: "https://mixcraft-preview.example",
+      API_BASE_URL: "https://mixcraft-preview.example",
+    };
+
+    expect(() => loadEnv({ ...coreSettings, DATABASE_URL: "" })).toThrow(/DATABASE_URL/);
+    expect(() => loadEnv({ ...coreSettings, ENCRYPTION_KEY: "" })).toThrow(/ENCRYPTION_KEY/);
+    expect(() => loadEnv({ ...coreSettings, WEB_ORIGIN: "" })).toThrow(/WEB_ORIGIN/);
+    expect(() => loadEnv({ ...coreSettings, API_BASE_URL: "" })).toThrow(/API_BASE_URL/);
   });
 
   it("leaves connection credentials unset by default", () => {
@@ -103,7 +162,9 @@ describe("loadEnv", () => {
   it("accepts a complete production environment", () => {
     const env = loadEnv({
       NODE_ENV: "production",
+      VERCEL_ENV: "production",
       DATABASE_URL: "postgresql://user:pass@db.example:5432/mixcraft",
+      WEB_ORIGIN: "https://app.mixcraft.example",
       GITHUB_CLIENT_ID: "client-id",
       GITHUB_CLIENT_SECRET: "client-secret",
       ENCRYPTION_KEY: VALID_KEY,
@@ -118,6 +179,7 @@ describe("loadEnv", () => {
       VERCEL_CLIENT_SECRET: "vercel-client-secret",
     });
     expect(env.API_BASE_URL).toBe("https://api.mixcraft.example");
+    expect(env.WEB_ORIGIN).toBe("https://app.mixcraft.example");
     expect(env.GITHUB_CLIENT_ID).toBe("client-id");
     expect(env.GITHUB_APP_SLUG).toBe("mixcraft-app");
     expect(env.VERCEL_CLIENT_ID).toBe("vercel-client-id");
