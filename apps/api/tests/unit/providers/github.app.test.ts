@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildAppJwt,
   buildInstallUrl,
+  createInstallationAccessToken,
   fetchInstallation,
   installationPermissionsToScopes,
   isInstallationAssociatedWithUser,
@@ -156,6 +157,57 @@ describe("fetchInstallation", () => {
     const fetchImpl: typeof fetch = async () => jsonResponse({ message: "Bad credentials" }, 401);
     await expect(fetchInstallation(config, 1, fetchImpl)).rejects.toMatchObject({
       kind: "rejected",
+    });
+  });
+});
+
+describe("createInstallationAccessToken", () => {
+  it("creates a short-lived installation token with normalized permissions", async () => {
+    const seen: { method?: string; authorization?: string } = {};
+    const fetchImpl: typeof fetch = async (_input, init) => {
+      seen.method = init?.method;
+      seen.authorization = (init?.headers as Record<string, string>)["Authorization"];
+      return jsonResponse(
+        {
+          token: "ghs_installation_token",
+          expires_at: "2026-10-27T13:00:00Z",
+          permissions: { contents: "read", metadata: "read", issues: 42 },
+        },
+        201,
+      );
+    };
+
+    await expect(createInstallationAccessToken(config, 424242, fetchImpl)).resolves.toEqual({
+      token: "ghs_installation_token",
+      expiresAt: "2026-10-27T13:00:00Z",
+      permissions: { contents: "read", metadata: "read" },
+    });
+    expect(seen.method).toBe("POST");
+    expect(seen.authorization?.startsWith("Bearer ")).toBe(true);
+  });
+
+  it("classifies a missing installation as not_found", async () => {
+    const fetchImpl: typeof fetch = async () => jsonResponse({}, 404);
+    await expect(createInstallationAccessToken(config, 1, fetchImpl)).rejects.toMatchObject({
+      name: "GitHubAppError",
+      kind: "not_found",
+    });
+  });
+
+  it("classifies an unreachable API as network", async () => {
+    const fetchImpl: typeof fetch = async () => {
+      throw new Error("ECONNRESET");
+    };
+    await expect(createInstallationAccessToken(config, 1, fetchImpl)).rejects.toMatchObject({
+      kind: "network",
+    });
+  });
+
+  it("rejects a response without a token", async () => {
+    const fetchImpl: typeof fetch = async () =>
+      jsonResponse({ expires_at: null, permissions: {} });
+    await expect(createInstallationAccessToken(config, 1, fetchImpl)).rejects.toMatchObject({
+      reason: "installation_token",
     });
   });
 });
