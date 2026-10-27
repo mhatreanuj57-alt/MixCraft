@@ -11,7 +11,12 @@ export class GitHubAuthError extends Error {
 }
 
 export type GitHubAppErrorReason =
-  "jwt" | "installation_fetch" | "association_check" | "token_revoke" | "unexpected_response";
+  | "jwt"
+  | "installation_fetch"
+  | "installation_token"
+  | "association_check"
+  | "token_revoke"
+  | "unexpected_response";
 
 /**
  * `network` = GitHub unreachable (temporary); `not_found` = the installation no
@@ -33,5 +38,24 @@ export class GitHubAppError extends Error {
     this.name = "GitHubAppError";
     this.reason = reason;
     this.kind = kind;
+  }
+}
+
+export type GitHubOverviewErrorKind =
+  | "network"
+  | "permission"
+  | "not_found"
+  | "rate_limited"
+  | "unexpected";
+
+export class GitHubOverviewError extends Error {
+  readonly kind: GitHubOverviewErrorKind;
+  readonly status: number | null;
+
+  constructor(kind: GitHubOverviewErrorKind, message: string, status: number | null = null) {
+    super(message);
+    this.name = "GitHubOverviewError";
+    this.kind = kind;
+    this.status = status;
   }
 }
