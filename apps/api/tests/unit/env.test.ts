@@ -93,28 +93,27 @@ describe("loadEnv", () => {
     );
   });
 
-  it("requires GitHub App and Vercel connection credentials in production", () => {
-    expect(() => loadEnv({ NODE_ENV: "production", VERCEL_ENV: "production" })).toThrow(
-      /GITHUB_APP_ID/,
-    );
-    expect(() => loadEnv({ NODE_ENV: "production", VERCEL_ENV: "production" })).toThrow(
-      /GITHUB_APP_SLUG/,
-    );
-    expect(() => loadEnv({ NODE_ENV: "production", VERCEL_ENV: "production" })).toThrow(
-      /GITHUB_APP_CLIENT_ID/,
-    );
-    expect(() => loadEnv({ NODE_ENV: "production", VERCEL_ENV: "production" })).toThrow(
-      /GITHUB_APP_CLIENT_SECRET/,
-    );
-    expect(() => loadEnv({ NODE_ENV: "production", VERCEL_ENV: "production" })).toThrow(
-      /GITHUB_APP_PRIVATE_KEY/,
-    );
-    expect(() => loadEnv({ NODE_ENV: "production", VERCEL_ENV: "production" })).toThrow(
-      /VERCEL_CLIENT_ID/,
-    );
-    expect(() => loadEnv({ NODE_ENV: "production", VERCEL_ENV: "production" })).toThrow(
-      /VERCEL_CLIENT_SECRET/,
-    );
+  it("allows provider connection credentials to be absent in production", () => {
+    const env = loadEnv({
+      NODE_ENV: "production",
+      VERCEL_ENV: "production",
+      DATABASE_URL: "postgresql://user:pass@db.example:5432/mixcraft",
+      WEB_ORIGIN: "https://mixcraft.example",
+      API_BASE_URL: "https://mixcraft.example",
+      ENCRYPTION_KEY: VALID_KEY,
+      GITHUB_CLIENT_ID: "client-id",
+      GITHUB_CLIENT_SECRET: "client-secret",
+    });
+
+    expect(env.NODE_ENV).toBe("production");
+    expect(env.GITHUB_CLIENT_ID).toBe("client-id");
+    expect(env.GITHUB_APP_ID).toBeUndefined();
+    expect(env.GITHUB_APP_SLUG).toBeUndefined();
+    expect(env.GITHUB_APP_CLIENT_ID).toBeUndefined();
+    expect(env.GITHUB_APP_CLIENT_SECRET).toBeUndefined();
+    expect(env.GITHUB_APP_PRIVATE_KEY).toBeUndefined();
+    expect(env.VERCEL_CLIENT_ID).toBeUndefined();
+    expect(env.VERCEL_CLIENT_SECRET).toBeUndefined();
   });
 
   it("allows provider credentials to be absent in production-mode Preview", () => {
