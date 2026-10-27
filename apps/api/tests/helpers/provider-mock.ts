@@ -7,6 +7,10 @@ export interface ProviderMockCall {
     | "github_token"
     | "github_user"
     | "github_installation"
+    | "github_installation_token"
+    | "github_repositories"
+    | "github_commits"
+    | "github_graphql"
     | "github_association"
     | "github_revoke"
     | "npm_whoami"
@@ -34,7 +38,97 @@ export function createProviderMock() {
       accountLogin: "acme-corp",
       accountType: "Organization",
       suspended: false,
-      permissions: { contents: "read", metadata: "read" },
+      permissions: { contents: "read", metadata: "read" } as Record<string, string>,
+    },
+    githubInstallationTokenMode: "ok" as MockMode,
+    githubInstallationToken: "ghs_mock_installation_token",
+    githubRepositoriesMode: "ok" as MockMode,
+    githubCommitsMode: "ok" as MockMode,
+    githubGraphqlMode: "ok" as MockMode,
+    githubRepositories: [
+      {
+        id: 101,
+        name: "alpha",
+        full_name: "acme-corp/alpha",
+        owner: { login: "acme-corp" },
+        private: false,
+        description: "Public product repository",
+        language: "TypeScript",
+        stargazers_count: 42,
+        forks_count: 5,
+        open_issues_count: 3,
+        html_url: "https://github.com/acme-corp/alpha",
+        default_branch: "main",
+        pushed_at: "2026-10-26T12:00:00Z",
+        updated_at: "2026-10-26T12:00:00Z",
+      },
+      {
+        id: 102,
+        name: "private-repo",
+        full_name: "acme-corp/private-repo",
+        owner: { login: "acme-corp" },
+        private: true,
+        description: "Internal repository",
+        language: "Go",
+        stargazers_count: 7,
+        forks_count: 1,
+        open_issues_count: 0,
+        html_url: "https://github.com/acme-corp/private-repo",
+        default_branch: "main",
+        pushed_at: "2026-10-25T12:00:00Z",
+        updated_at: "2026-10-25T12:00:00Z",
+      },
+    ],
+    githubCommits: {
+      "acme-corp/alpha": [
+        {
+          sha: "a".repeat(40),
+          html_url: "https://github.com/acme-corp/alpha/commit/aaaaaaaa",
+          commit: {
+            message: "Add overview endpoint",
+            author: { date: "2026-10-26T11:00:00Z" },
+          },
+          author: { login: "conn-user-a" },
+        },
+        {
+          sha: "b".repeat(40),
+          html_url: "https://github.com/acme-corp/alpha/commit/bbbbbbbb",
+          commit: {
+            message: "Wire overview data",
+            author: { date: "2026-10-24T11:00:00Z" },
+          },
+          author: { login: "conn-user-a" },
+        },
+      ],
+      "acme-corp/private-repo": [
+        {
+          sha: "c".repeat(40),
+          html_url: "https://github.com/acme-corp/private-repo/commit/cccccccc",
+          commit: {
+            message: "Private repository fix",
+            author: { date: "2026-10-23T11:00:00Z" },
+          },
+          author: { login: "conn-user-a" },
+        },
+      ],
+    } as Record<string, unknown[]>,
+    githubCommitFailures: new Set<string>(),
+    githubContributions: {
+      restrictedContributionsCount: 2,
+      hasAnyRestrictedContributions: true,
+      contributionCalendar: {
+        totalContributions: 5,
+        weeks: [
+          {
+            contributionDays: [
+              { date: "2026-10-20", contributionCount: 1, contributionLevel: "FIRST_QUARTILE" },
+              { date: "2026-10-21", contributionCount: 2, contributionLevel: "SECOND_QUARTILE" },
+              { date: "2026-10-22", contributionCount: 0, contributionLevel: "NONE" },
+              { date: "2026-10-23", contributionCount: 2, contributionLevel: "THIRD_QUARTILE" },
+            ],
+          },
+        ],
+      },
     },
     missingInstallations: new Set<number>(),
     association: "ok" as "ok" | "missing" | "unauthorized",
@@ -125,6 +219,84 @@ export function createProviderMock() {
           },
           suspended_at: state.githubInstallation.suspended ? "2026-01-01T00:00:00Z" : null,
           permissions: state.githubInstallation.permissions,
+        });
+      }
+
+      const installationTokenMatch = /^\/app\/installations\/(\d+)\/access_tokens$/.exec(path);
+      if (installationTokenMatch && init?.method === "POST") {
+        calls.push({ kind: "github_installation_token", detail: installationTokenMatch[1] as string });
+        const failure = failOrThrow(
+          state.githubInstallationTokenMode,
+          { message: "Bad credentials" },
+          401,
+        );
+        if (failure) return failure;
+        return json({
+          token: state.githubInstallationToken,
+          expires_at: "2026-10-27T13:00:00Z",
+          permissions: state.githubInstallation.permissions,
+        });
+      }
+
+      if (path === "/installation/repositories" && init?.method === "GET") {
+        calls.push({ kind: "github_repositories" });
+        if (authHeader !== `Bearer ${state.githubInstallationToken}`) {
+          return json({ message: "Bad credentials" }, 401);
+        }
+        const failure = failOrThrow(
+          state.githubRepositoriesMode,
+          { message: "Resource not accessible by integration" },
+          403,
+        );
+        if (failure) return failure;
+        const page = Number(url.searchParams.get("page") ?? "1");
+        const perPage = Number(url.searchParams.get("per_page") ?? "100");
+        const start = (page - 1) * perPage;
+        return json({
+          total_count: state.githubRepositories.length,
+          repositories: state.githubRepositories.slice(start, start + perPage),
+        });
+      }
+
+      const commitsMatch = /^\/repos\/([^/]+)\/([^/]+)\/commits$/.exec(path);
+      if (commitsMatch && init?.method === "GET") {
+        const fullName = `${commitsMatch[1]}/${commitsMatch[2]}`;
+        calls.push({ kind: "github_commits", detail: fullName });
+        if (authHeader !== `Bearer ${state.githubInstallationToken}`) {
+          return json({ message: "Bad credentials" }, 401);
+        }
+        if (state.githubCommitFailures.has(fullName)) {
+          return json({ message: "Resource not accessible by integration" }, 403);
+        }
+        const failure = failOrThrow(
+          state.githubCommitsMode,
+          { message: "Resource not accessible by integration" },
+          403,
+        );
+        if (failure) return failure;
+        return json(state.githubCommits[fullName] ?? []);
+      }
+
+      if (path === "/graphql" && init?.method === "POST") {
+        calls.push({ kind: "github_graphql" });
+        if (authHeader !== "Bearer gho_mock_token") {
+          return json({ message: "Bad credentials" }, 401);
+        }
+        const failure = failOrThrow(
+          state.githubGraphqlMode,
+          { message: "Resource not accessible by integration" },
+          403,
+        );
+        if (failure) return failure;
+        return json({
+          data: {
+            viewer: {
+              login: state.githubUser.login,
+              name: state.githubUser.name,
+              avatarUrl: `https://avatars.example/${state.githubUser.login}.png`,
+              contributionsCollection: state.githubContributions,
+            },
+          },
         });
       }
 
