@@ -14,6 +14,7 @@ export const API_ROUTES = {
   vercelConnectCallback: "/api/connections/vercel/callback",
   connectionByParam: "/api/connections/:provider/:connectionId",
   connectionRefreshByParam: "/api/connections/:provider/:connectionId/refresh",
+  githubOverview: "/api/github/overview",
 } as const;
 
 export const COOKIES = {
