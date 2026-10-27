@@ -1,5 +1,6 @@
 export * from "./types/api.js";
 export * from "./types/errors.js";
+export * from "./types/github.js";
 export * from "./types/providers.js";
 export * from "./constants/providers.js";
 export * from "./schemas/api.js";
