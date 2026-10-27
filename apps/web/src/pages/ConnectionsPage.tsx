@@ -1,5 +1,6 @@
 import { PROVIDER_META, type ConnectionRecord, type ProviderId } from "@mixcraft/shared";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import SiteHeader from "../components/SiteHeader";
 import {
   connectNpmToken,
   disconnectConnection,
@@ -150,19 +151,7 @@ export default function ConnectionsPage({ fetchImpl }: { fetchImpl?: typeof fetc
   return (
     <div className="mc-page">
       <div className="mc-shell">
-        <header className="mc-header">
-          <div className="mc-brand">
-            <div>
-              <p className="mc-eyebrow">Developer Control Center</p>
-              <p className="mc-brand-name">MixCraft</p>
-            </div>
-          </div>
-          <nav aria-label="Primary">
-            <a className="mc-link" href="/">
-              Overview
-            </a>
-          </nav>
-        </header>
+        <SiteHeader active="connections" />
 
         <main className="mc-main">
           <section className="mc-hero" aria-labelledby="connections-title">
