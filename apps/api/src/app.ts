@@ -6,9 +6,15 @@ import { setupSecurity } from "./plugins/security.js";
 import { setupSession } from "./plugins/session.js";
 import { authRoutes, type AuthRoutesOptions } from "./routes/auth.routes.js";
 import { connectionsRoutes, type ConnectionsRoutesOptions } from "./routes/connections.routes.js";
+import {
+  githubOverviewRoutes,
+  type GitHubOverviewRoutesOptions,
+} from "./routes/github.routes.js";
 import { healthRoutes } from "./routes/health.routes.js";
 
-export type BuildAppOptions = AuthRoutesOptions & ConnectionsRoutesOptions;
+export type BuildAppOptions = AuthRoutesOptions &
+  ConnectionsRoutesOptions &
+  GitHubOverviewRoutesOptions;
 
 export function buildApp(options: BuildAppOptions = {}) {
   const logLevel =
@@ -36,6 +42,10 @@ export function buildApp(options: BuildAppOptions = {}) {
   void app.register(healthRoutes);
   void app.register(authRoutes, { fetchImpl: options.fetchImpl });
   void app.register(connectionsRoutes, {
+    fetchImpl: options.fetchImpl,
+    connectionsConfig: options.connectionsConfig,
+  });
+  void app.register(githubOverviewRoutes, {
     fetchImpl: options.fetchImpl,
     connectionsConfig: options.connectionsConfig,
   });
