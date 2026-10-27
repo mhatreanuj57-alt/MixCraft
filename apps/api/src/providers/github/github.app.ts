@@ -21,6 +21,12 @@ export interface GithubInstallationInfo {
   scopes: string[];
 }
 
+export interface GithubInstallationToken {
+  token: string;
+  expiresAt: string | null;
+  permissions: Record<string, string>;
+}
+
 function base64url(input: Buffer | string): string {
   return Buffer.from(input).toString("base64url");
 }
@@ -120,6 +126,66 @@ export async function fetchInstallation(
     accountType: type,
     suspended: typeof suspended_at === "string" && suspended_at.length > 0,
     scopes: installationPermissionsToScopes(permissions),
+  };
+}
+
+export async function createInstallationAccessToken(
+  config: GithubAppConfig,
+  installationId: number,
+  fetchImpl: typeof fetch,
+): Promise<GithubInstallationToken> {
+  const jwt = buildAppJwt(config);
+  let response: Response;
+  try {
+    response = await fetchImpl(
+      `${GITHUB_OAUTH.apiUrl}/app/installations/${String(installationId)}/access_tokens`,
+      { method: "POST", headers: appHeaders(jwt) },
+    );
+  } catch {
+    throw new GitHubAppError("installation_token", "GitHub API is unreachable.", "network");
+  }
+  if (response.status === 404) {
+    throw new GitHubAppError(
+      "installation_token",
+      "GitHub App installation was not found.",
+      "not_found",
+    );
+  }
+  if (response.status === 401) {
+    throw new GitHubAppError("jwt", "GitHub rejected the App JWT.");
+  }
+  if (!response.ok) {
+    throw new GitHubAppError("installation_token", "GitHub rejected the installation token request.");
+  }
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new GitHubAppError("installation_token", "GitHub returned an unreadable token response.");
+  }
+  if (typeof payload !== "object" || payload === null) {
+    throw new GitHubAppError("installation_token", "GitHub returned an unexpected token response.");
+  }
+  const { token, expires_at, permissions } = payload as {
+    token?: unknown;
+    expires_at?: unknown;
+    permissions?: unknown;
+  };
+  if (typeof token !== "string" || token.length === 0) {
+    throw new GitHubAppError("installation_token", "GitHub did not return an installation token.");
+  }
+  const normalizedPermissions: Record<string, string> = {};
+  if (typeof permissions === "object" && permissions !== null) {
+    for (const [name, level] of Object.entries(permissions as Record<string, unknown>)) {
+      if (typeof level === "string" && level.length > 0) {
+        normalizedPermissions[name] = level;
+      }
+    }
+  }
+  return {
+    token,
+    expiresAt: typeof expires_at === "string" && expires_at.length > 0 ? expires_at : null,
+    permissions: normalizedPermissions,
   };
 }
 
