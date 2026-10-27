@@ -68,17 +68,12 @@ const envSchema = z
       "ENCRYPTION_KEY",
       "API_BASE_URL",
     ] as const;
+    // Login is required in production. Connection providers are optional and
+    // reported as PROVIDER_UNAVAILABLE by loadConnectionsConfig when unset.
     const productionRequiredFields = [
       ...previewRequiredFields,
       "GITHUB_CLIENT_ID",
       "GITHUB_CLIENT_SECRET",
-      "GITHUB_APP_ID",
-      "GITHUB_APP_SLUG",
-      "GITHUB_APP_CLIENT_ID",
-      "GITHUB_APP_CLIENT_SECRET",
-      "GITHUB_APP_PRIVATE_KEY",
-      "VERCEL_CLIENT_ID",
-      "VERCEL_CLIENT_SECRET",
     ] as const;
     const requiredFields =
       value.VERCEL_ENV === "preview" ? previewRequiredFields : productionRequiredFields;
