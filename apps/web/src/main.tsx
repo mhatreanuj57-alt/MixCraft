@@ -4,6 +4,7 @@ import App from "./app/App";
 import "./styles/tokens.css";
 import "./styles/global.css";
 import "./styles/typography.css";
+import "./styles/overview.css";
 
 const rootElement = document.getElementById("root");
 
